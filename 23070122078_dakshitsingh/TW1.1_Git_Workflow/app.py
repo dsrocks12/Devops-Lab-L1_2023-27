@@ -18,5 +18,5 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Starting Flask from the main assignment branch")
+    print("Starting the Flask application with resolved main and user-auth changes")
     app.run(host="0.0.0.0", port=5000)
