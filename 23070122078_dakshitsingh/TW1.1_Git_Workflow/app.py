@@ -18,5 +18,5 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Starting the original Flask application")
+    print("Starting Flask with the user authentication feature")
     app.run(host="0.0.0.0", port=5000)
