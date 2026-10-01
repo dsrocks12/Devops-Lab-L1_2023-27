@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'dakshit-flask'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('23070122078_dakshitsingh/TW1.1_Git_Workflow') {
+                    sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    docker rm -f flask-pipeline-test 2>/dev/null || true
+                    docker run -d --name flask-pipeline-test -p 5001:5000 ${IMAGE_NAME}:${IMAGE_TAG}
+                    trap 'docker rm -f flask-pipeline-test' EXIT
+                    for attempt in 1 2 3 4 5; do
+                      curl --fail http://localhost:5001/health && exit 0
+                      sleep 2
+                    done
+                    docker logs flask-pipeline-test
+                    exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker rm -f flask-pipeline-test 2>/dev/null || true'
+        }
+        success {
+            echo "Built and tested ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+    }
+}

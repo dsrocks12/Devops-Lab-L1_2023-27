@@ -1,0 +1,18 @@
+services:
+  flask:
+    build: ./TW1.1_Git_Workflow
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  react:
+    build: ./Project2_React_Docker
+    ports:
+      - "8080:80"
+    depends_on:
+      flask:
+        condition: service_healthy

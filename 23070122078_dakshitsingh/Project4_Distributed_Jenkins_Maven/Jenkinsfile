@@ -1,0 +1,52 @@
+pipeline {
+    agent none
+
+    options {
+        timestamps()
+        skipDefaultCheckout(true)
+    }
+
+    stages {
+        stage('Compile on Agent 1') {
+            agent { label 'maven-agent-1' }
+            steps {
+                checkout scm
+                dir('23070122078_dakshitsingh/Project4_Distributed_Jenkins_Maven') {
+                    sh 'mvn --batch-mode clean compile'
+                    stash name: 'maven-source', includes: '**/*', useDefaultExcludes: false
+                }
+            }
+        }
+
+        stage('Test and Package on Agent 2') {
+            agent { label 'maven-agent-2' }
+            steps {
+                dir('portfolio') {
+                    unstash 'maven-source'
+                    sh 'mvn --batch-mode test package'
+                    junit 'target/surefire-reports/*.xml'
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+
+        stage('Verify on Both Agents') {
+            parallel {
+                stage('Verify Agent 1') {
+                    agent { label 'maven-agent-1' }
+                    steps {
+                        echo "Agent 1: ${env.NODE_NAME}"
+                        sh 'java -version'
+                    }
+                }
+                stage('Verify Agent 2') {
+                    agent { label 'maven-agent-2' }
+                    steps {
+                        echo "Agent 2: ${env.NODE_NAME}"
+                        sh 'java -version'
+                    }
+                }
+            }
+        }
+    }
+}
